@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Descargar Archivos desde Amazon S3</title>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body {
+  background-color: #343a40;
+  color: #dee2e6;
+}
+.container {
+  padding: 10px;
+  border-radius: 5px;
+}
+.borde-difuminado {
+  border-radius: 30px;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  border: 10px #343a40;
+}
+</style>
+
+
+</head>
+<body>
+
+<div class="container mt-5">
+  <center>
+  <h1 class="mb-4">Descargar FACTURA Por folio</h1>
+  <img src="https://notificacion-proveedores.s3.us-west-2.amazonaws.com/gimlogo.jpg" alt="GIM LOGO" width="350" height="130" class="borde-difuminado">
+  </center>
+  <br>
+  <p>Ingrese el rango de las facturas que necesita descargar sin incluir las iniciales "FP"</p>
+  <form id="rangeForm" class="mb-4">
+    <div class="form-row">
+      <div class="col">
+        <label for="start">Inicio:</label>
+        <input type="number" id="start" name="start" class="form-control" min="0" max="999999" required>
+      </div>
+      <div class="col">
+        <label for="end">Fin:</label>
+        <input type="number" id="end" name="end" class="form-control" min="0" max="999999" required>
+      </div>
+    </div>
+    <center>
+      <button type="submit" class="btn btn-danger mt-2">Descargar Archivos</button>
+    </center>
+  </form>
+
+  <div id="enlacesDescarga"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1023.0.min.js"></script>
+<script>
+
+  const accessKeyId = 'your_access_key_id';
+  const secretAccessKey = 'your_secret_access_key';
+  const keys = btoa(`${accessKeyId}:${secretAccessKey}`);
+
+  AWS.config.update({
+    credentials: {
+      accessKeyId: keys,
+      secretAccessKey: keys
+    },
+    region: 'your_region'
+  });
+
+  const s3 = new AWS.S3();
+
+  async function descargarArchivo(numeroArchivo, zip) {
+    const params = {
+      Bucket: 'your_bucket',
+      Key: `_uri_if_needed_${numeroArchivo}.pdf`
+    };
+
+    try {
+      const data = await s3.getObject(params).promise();
+      zip.file(`${numeroArchivo}.pdf`, data.Body);
+      console.log(`Archivo ${numeroArchivo} agregado al ZIP`);
+    } catch (error) {
+      console.error(`Error al descargar el archivo ${numeroArchivo}:`, error);
+    }
+  }
+
+  function validarInputs(start, end) {
+    if (start === '' || end === '') {
+      alert('Los campos de inicio y fin no pueden estar vacíos.');
+      return false;
+    }
+
+    const startNum = parseInt(start);
+    const endNum = parseInt(end);
+
+    if (startNum > endNum) {
+      alert('El número de inicio debe ser menor o igual al número de fin.');
+      return false;
+    }
+
+    if ((endNum - startNum) > 200) {
+      alert('La diferencia entre el número de inicio y fin no puede ser mayor a 200.');
+      return false;
+    }
+
+    return true;
+  }
+
+  document.getElementById("rangeForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+    
+    var start = document.getElementById("start").value;
+    var end = document.getElementById("end").value;
+
+    if (!validarInputs(start, end)) {
+      return;
+    }
+
+    const zip = new JSZip();
+
+    for (let i = parseInt(start); i <= parseInt(end); i++) {
+      await descargarArchivo(i, zip);
+    }
+
+    const zipName = prompt('Ingrese el nombre para el archivo ZIP:');
+    if (zipName) {
+
+      zip.generateAsync({ type: "blob" })
+        .then(function(content) {
+          const enlaceDescarga = document.createElement('a');
+          enlaceDescarga.href = URL.createObjectURL(content);
+          enlaceDescarga.download = zipName + '.zip';
+          enlaceDescarga.textContent = 'Haz click aquí si la descarga no comienza automáticamente';
+          document.getElementById('enlacesDescarga').appendChild(enlaceDescarga);
+          enlaceDescarga.click();
+        });
+    }
+  });
+
+</script>
+</body>
+</html>
