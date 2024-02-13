@@ -55,16 +55,16 @@ body {
 <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1023.0.min.js"></script>
 <script>
 
-  const accessKeyId = 'your_access_key_id';
-  const secretAccessKey = 'your_secret_access_key';
-  const keys = btoa(`${accessKeyId}:${secretAccessKey}`);
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+  const region = process.env.AWS_REGION;
 
   AWS.config.update({
     credentials: {
-      accessKeyId: keys,
-      secretAccessKey: keys
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey
     },
-    region: 'your_region'
+    region: region
   });
 
   const s3 = new AWS.S3();

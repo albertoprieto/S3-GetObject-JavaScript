@@ -9,6 +9,13 @@ Este proyecto permite descargar archivos desde Amazon S3 utilizando JavaScript y
 - Permite al usuario especificar el nombre del archivo ZIP.
 - Valida los rangos de entrada para asegurarse de que sean válidos antes de la descarga.
 
+## Variables de entorno
+```bash
+- export AWS_ACCESS_KEY_ID='tu_access_key_id'
+- export AWS_SECRET_ACCESS_KEY='tu_secret_access_key'
+- export AWS_REGION='tu_region'
+```
+
 ## Cómo utilizar
 
 1. Clona este repositorio o descarga los archivos.
